@@ -82,3 +82,26 @@ def coast_importer(cols, rows, *path):
 			# get all variations down the vertical axis (every 3 rows)
 			new_dict[terrain][key] = [frame_dict[(pos[0] + index * 3, pos[1] + row)] for row in range(0, rows, 3)]
 	return new_dict
+
+# import character animation frames from tilemap image by slicing into a grid
+def character_importer(cols, rows, *path):
+	# load tilemap and convert it into a dictionary
+	frame_dict = import_tilemap(cols, rows, *path)
+	new_dict = {}
+	# assign directional animations by row - 0=down, 1=left, 2=right, 3=up
+	for row, direction in enumerate(('down', 'left', 'right', 'up')):
+		new_dict[direction] = [frame_dict[(col, row)] for col in range(cols)]
+		new_dict[f'{direction}_idle'] = [frame_dict[(0, row)]]
+	return new_dict
+
+# loads all character tilemaps in a folder and generates animation dictionaries
+def all_character_import(*path):
+	new_dict = {}
+	# recursively go thru the directory to find image files
+	for _, __, image_names in walk(join(*path)):
+		# strip file extension to use as dictionary key
+		for image in image_names:
+			image_name = image.split('.')[0]
+			# import character frames 
+			new_dict[image_name] = character_importer(4,4,*path, image_name)
+	return new_dict

@@ -4,7 +4,7 @@ import os
 from settings import *
 from pytmx.util_pygame import load_pygame
 from sprites import Sprite, AnimatedSprite
-from entities import Player
+from entities import Player, Character
 from groups import AllSprites
 from support import * 
 
@@ -43,11 +43,13 @@ class Game:
         # create path for water animation and coast tileset
         water_path = os.path.join(base_path, '..', 'graphics', 'tilesets', 'water')
         coast_path = (24, 12, base_path, '..', 'graphics', 'tilesets', 'coast')
+        characters_path = (base_path, '..', 'graphics', 'characters')
 
         # load animation and tiles
         self.overworld_frames = {
             'water': import_folder(water_path),
-            'coast': coast_importer(*coast_path)
+            'coast': coast_importer(*coast_path),
+            'characters': all_character_import(*characters_path)
         }
     
     def setup(self, tmx_map, player_start_pos):
@@ -62,8 +64,19 @@ class Game:
 
         # go through the 'Entities' layer and place the player
         for obj in tmx_map.get_layer_by_name('Entities'):
-            if obj.name == 'Player' and obj.properties['pos'] == player_start_pos:
-                self.player = Player((obj.x, obj.y), self.all_sprites)
+            if obj.name == 'Player':
+                if obj.properties['pos'] == player_start_pos:
+                    self.player = Player(
+                        pos = (obj.x, obj.y),
+                        frames = self.overworld_frames['characters']['player'], 
+                        groups = self.all_sprites,
+                        facing_direction = obj.properties["direction"])
+            else: 
+                Character(
+                    pos = (obj.x, obj.y),
+                    frames = self.overworld_frames['characters'][obj.properties['graphic']], 
+                    groups = self.all_sprites,
+                    facing_direction = obj.properties["direction"])
 
         # go through the 'Water' layer and place the player
         for obj in tmx_map.get_layer_by_name('Water'):
