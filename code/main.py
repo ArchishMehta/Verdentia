@@ -3,6 +3,9 @@ import pygame
 import os
 from settings import *
 from pytmx.util_pygame import load_pygame
+from sprites import Sprite
+from entities import Player
+from groups import AllSprites
 
 
 # game class
@@ -14,23 +17,61 @@ class Game:
         self.display_surface = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
         # set title of the window
         pygame.display.set_caption('Verdentia')
+        self.clock = pygame.time.Clock()
+        # groups
+        self.all_sprites = AllSprites()
 
+        # load game assets
         self.import_assets()
+        self.setup(self.tmx_maps['hospital'], 'world')
 
     def import_assets(self):
-        base_path = os.path.dirname(os.path.abspath(__file__))  # path to code
-        map_path = os.path.join(base_path, '..', 'data', 'maps', 'world.tmx')
-        self.tmx_maps = {'world': load_pygame(map_path)}
+        # get path to current file
+        base_path = os.path.dirname(os.path.abspath(__file__))
+
+        # create paths to TMX map files
+        world_map_path = os.path.join(base_path, '..', 'data', 'maps', 'world.tmx')
+        hospital_map_path = os.path.join(base_path, '..', 'data', 'maps', 'hospital.tmx')
+
+        # load maps
+        self.tmx_maps = {
+            'world': load_pygame(world_map_path),
+            'hospital': load_pygame(hospital_map_path)
+        }
+    
+    def setup(self, tmx_map, player_start_pos):
+        # go through the 'Terrain' layer of map
+        for layer in ['Terrain', 'Terrain Top']:
+            for x, y, surf in tmx_map.get_layer_by_name(layer).tiles():
+                Sprite((x * TILE_SIZE, y * TILE_SIZE), surf, self.all_sprites)
+        
+        # go through the 'objects' layer of map
+        for obj in tmx_map.get_layer_by_name('Objects'):
+            Sprite((obj.x, obj.y), obj.image, self.all_sprites)
+
+        # go through the 'Entities' layer and place the player
+        for obj in tmx_map.get_layer_by_name('Entities'):
+            if obj.name == 'Player' and obj.properties['pos'] == player_start_pos:
+                self.player = Player((obj.x, obj.y), self.all_sprites)
 
     def run(self):
         # main game loop to keep the game running
         while True:
+            # track the frame rate 
+            # time difference between current frame and last frame
+            dt = self.clock.tick() / 1000 # 1000 ms in second
             # game loop
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     # if the user clicks the close button
                     pygame.quit()
                     exit()
+            
+            # looks at all sprites and update
+            self.all_sprites.update(dt)
+            self.display_surface.fill('black')
+            # draw
+            self.all_sprites.draw(self.player.rect.center)
             # update the display with any changes
             pygame.display.update()
 
