@@ -3,6 +3,7 @@ from settings import *
 
 # a class for the main player
 class Player(pygame.sprite.Sprite):
+    # constrcutor for main player
     def __init__(self, pos, groups):
         super().__init__(groups) 
         self.image = pygame.Surface((100, 100))
@@ -12,21 +13,28 @@ class Player(pygame.sprite.Sprite):
         self.direction = vector()
 
     def input(self):
+        # get the pressed key
         keys = pygame.key.get_pressed()
         input_vector = vector()
+        # if UP
         if keys[pygame.K_UP]:
             input_vector.y -= 1
+        # if DOWN
         if keys[pygame.K_DOWN]:
             input_vector.y += 1
+        # if LEFT
         if keys[pygame.K_LEFT]:
             input_vector.x -= 1
+        # if RIGHT
         if keys[pygame.K_RIGHT]:
             input_vector.x += 1
         self.direction = input_vector
 
+    # move player based on direction and delta time
     def move(self, dt): 
         self.rect.center += self.direction * 250 * dt 
 
+    # update the player each frame
     def update(self, dt):
         self.input()
         self.move(dt)
