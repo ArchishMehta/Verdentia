@@ -3,7 +3,7 @@ import pygame
 import os
 from settings import *
 from pytmx.util_pygame import load_pygame
-from sprites import Sprite, AnimatedSprite
+from sprites import Sprite, AnimatedSprite, MonsterPatchSprite, BorderSprite, CollidableSprite
 from entities import Player, Character
 from groups import AllSprites
 from support import * 
@@ -21,6 +21,7 @@ class Game:
         self.clock = pygame.time.Clock()
         # groups
         self.all_sprites = AllSprites()
+        self.collision_sprites = pygame.sprite.Group()
 
         # load game assets
         self.import_assets()
@@ -56,11 +57,34 @@ class Game:
         # go through the 'Terrain' and 'Terrain Top' layer of map
         for layer in ['Terrain', 'Terrain Top']:
             for x, y, surf in tmx_map.get_layer_by_name(layer).tiles():
-                Sprite((x * TILE_SIZE, y * TILE_SIZE), surf, self.all_sprites)
+                Sprite((x * TILE_SIZE, y * TILE_SIZE), surf, self.all_sprites, WORLD_LAYERS['bg'])
+        
+        # go through the 'Water' layer and place the player
+        for obj in tmx_map.get_layer_by_name('Water'):
+            for x in range(int(obj.x), int(obj.x + obj.width), TILE_SIZE):
+                for y in range(int(obj.y), int(obj.y + obj.height), TILE_SIZE):
+                    AnimatedSprite((x,y), self.overworld_frames['water'], self.all_sprites,  WORLD_LAYERS['water'])
+        
+        # go through the 'Coast' layer and place the player
+        for obj in tmx_map.get_layer_by_name('Coast'):
+            terrain = obj.properties['terrain']
+            side = obj.properties['side']
+            AnimatedSprite((obj.x, obj.y), self.overworld_frames['coast'][terrain][side], self.all_sprites,  WORLD_LAYERS['bg'])
         
         # go through the 'Objects' layer of map
         for obj in tmx_map.get_layer_by_name('Objects'):
-            Sprite((obj.x, obj.y), obj.image, self.all_sprites)
+            if obj.name == 'top':
+                Sprite((obj.x, obj.y), obj.image, self.all_sprites, WORLD_LAYERS['top'])
+            else:
+                CollidableSprite((obj.x, obj.y), obj.image, (self.all_sprites, self.collision_sprites))
+
+        # collidable objects
+        for obj in tmx_map.get_layer_by_name('Collisions'):
+            BorderSprite((obj.x, obj.y), pygame.Surface((obj.width, obj.height)), self.collision_sprites)
+
+        # grass patches 
+        for obj in tmx_map.get_layer_by_name('Monsters'):
+            MonsterPatchSprite((obj.x, obj.y), obj.image, self.all_sprites, obj.properties['biome'])
 
         # go through the 'Entities' layer and place the player
         for obj in tmx_map.get_layer_by_name('Entities'):
@@ -70,25 +94,15 @@ class Game:
                         pos = (obj.x, obj.y),
                         frames = self.overworld_frames['characters']['player'], 
                         groups = self.all_sprites,
-                        facing_direction = obj.properties["direction"])
+                        facing_direction = obj.properties["direction"], 
+                        collision_sprites = self.collision_sprites)
             else: 
                 Character(
                     pos = (obj.x, obj.y),
                     frames = self.overworld_frames['characters'][obj.properties['graphic']], 
-                    groups = self.all_sprites,
+                    groups = (self.all_sprites, self.collision_sprites),
                     facing_direction = obj.properties["direction"])
 
-        # go through the 'Water' layer and place the player
-        for obj in tmx_map.get_layer_by_name('Water'):
-            for x in range(int(obj.x), int(obj.x + obj.width), TILE_SIZE):
-                for y in range(int(obj.y), int(obj.y + obj.height), TILE_SIZE):
-                    AnimatedSprite((x,y), self.overworld_frames['water'], self.all_sprites)
-        
-        # go through the 'Coast' layer and place the player
-        for obj in tmx_map.get_layer_by_name('Coast'):
-            terrain = obj.properties['terrain']
-            side = obj.properties['side']
-            AnimatedSprite((obj.x, obj.y), self.overworld_frames['coast'][terrain][side], self.all_sprites)
 
     def run(self):
         # main game loop to keep the game running
