@@ -3,7 +3,7 @@ from os.path import join
 from os import walk
 from pytmx.util_pygame import load_pygame
 
-# imports
+# import functions
 # imports a single image from a specified path
 def import_image(*path, alpha = True, format = 'png'):
 	# combine path and add file extension
@@ -70,17 +70,17 @@ def coast_importer(cols, rows, *path):
 	terrains = ['grass', 'grass_i', 'sand_i', 'sand', 'rock', 'rock_i', 'ice', 'ice_i']
 	# offset represents each tile type 
 	sides = {
-		'topleft': (0, 0), 'top': (1, 0), 'topright': (2, 0), 
-		'left': (0, 1), 'right': (2, 1), 'bottomleft': (0, 2), 
-		'bottom': (1, 2), 'bottomright': (2, 2)
-	}
+		'topleft': (0,0), 'top': (1,0), 'topright': (2,0), 
+		'left': (0,1), 'right': (2,1), 'bottomleft': (0,2), 
+		'bottom': (1,2), 'bottomright': (2,2)
+		}
 	# for loop for every terrain type build nested dictionary of side variations
 	for index, terrain in enumerate(terrains):
 		new_dict[terrain] = {}
-
 		for key, pos in sides.items():
 			# get all variations down the vertical axis (every 3 rows)
-			new_dict[terrain][key] = [frame_dict[(pos[0] + index * 3, pos[1] + row)] for row in range(0, rows, 3)]
+			new_dict[terrain][key] = [frame_dict[(pos[0] + index * 3, pos[1] + row)] for row in range(0, rows, 3)
+]
 	return new_dict
 
 # import character animation frames from tilemap image by slicing into a grid
@@ -105,3 +105,14 @@ def all_character_import(*path):
 			# import character frames 
 			new_dict[image_name] = character_importer(4,4,*path, image_name)
 	return new_dict
+
+# game functions 
+def check_connections(radius, entity, target, tolerance = 30):
+	relation = vector(target.rect.center) - vector(entity.rect.center)
+	if relation.length() < radius:
+		if entity.facing_direction == 'left' and relation.x < 0 and abs(relation.y) < tolerance or\
+		   entity.facing_direction == 'right' and relation.x > 0 and abs(relation.y) < tolerance or\
+		   entity.facing_direction == 'up' and relation.y < 0 and abs(relation.x) < tolerance or\
+		   entity.facing_direction == 'down' and relation.y > 0 and abs(relation.x) < tolerance:
+			return True
+		

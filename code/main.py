@@ -1,12 +1,14 @@
 # import everything from settings
 import pygame
 import os
+from game_data import *
 from settings import *
 from pytmx.util_pygame import load_pygame
 from sprites import Sprite, AnimatedSprite, MonsterPatchSprite, BorderSprite, CollidableSprite
 from entities import Player, Character
 from groups import AllSprites
 from support import * 
+from dialog import DialogTree
 
 
 # game class
@@ -14,18 +16,24 @@ class Game:
     def __init__(self):
         # initialize all pygame modules
         pygame.init()
+
         # create main game window
         self.display_surface = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+
         # set title of the window
         pygame.display.set_caption('Verdentia')
         self.clock = pygame.time.Clock()
+
         # groups
         self.all_sprites = AllSprites()
         self.collision_sprites = pygame.sprite.Group()
+        self.character_sprites = pygame.sprite.Group()
 
         # load game assets
         self.import_assets()
         self.setup(self.tmx_maps['world'], 'house')
+
+        self.dialog_tree = None 
 
     def import_assets(self):
         # get path to current file
@@ -52,6 +60,14 @@ class Game:
             'coast': coast_importer(*coast_path),
             'characters': all_character_import(*characters_path)
         }
+
+        # create path for fonts
+        font_path = os.path.join(base_path, '..', 'graphics', 'fonts', 'PixeloidSans.ttf')
+
+        # load fonts
+        self.fonts = {
+            'dialog': pygame.font.Font(font_path, 30)
+        }
     
     def setup(self, tmx_map, player_start_pos):
         # go through the 'Terrain' and 'Terrain Top' layer of map
@@ -69,7 +85,7 @@ class Game:
         for obj in tmx_map.get_layer_by_name('Coast'):
             terrain = obj.properties['terrain']
             side = obj.properties['side']
-            AnimatedSprite((obj.x, obj.y), self.overworld_frames['coast'][terrain][side], self.all_sprites,  WORLD_LAYERS['bg'])
+            AnimatedSprite((obj.x, obj.y), self.overworld_frames['coast'][terrain][side], self.all_sprites, WORLD_LAYERS['bg'])
         
         # go through the 'Objects' layer of map
         for obj in tmx_map.get_layer_by_name('Objects'):
@@ -100,9 +116,35 @@ class Game:
                 Character(
                     pos = (obj.x, obj.y),
                     frames = self.overworld_frames['characters'][obj.properties['graphic']], 
-                    groups = (self.all_sprites, self.collision_sprites),
-                    facing_direction = obj.properties["direction"])
+                    groups = (self.all_sprites, self.collision_sprites, self.character_sprites),
+                    facing_direction = obj.properties["direction"], 
+                    character_data = TRAINER_DATA[obj.properties['character_id']],
+                    player = self.player,
+                    create_dialog = self.create_dialog,
+                    collision_sprites = self.collision_sprites,
+                    radius = obj.properties['radius'])
 
+    def input(self):
+        if not self.dialog_tree:
+            keys = pygame.key.get_just_pressed()
+            if keys[pygame.K_SPACE]:
+                for character in self.character_sprites:
+                    if check_connections(100, self.player, character):
+                        # block player input 
+                        self.player.block()
+                        # entities face each other
+                        character.change_facing_direction(self.player.rect.center)
+                        # dialog
+                        self.create_dialog(character)
+                        character.can_rotate = False
+    
+    def create_dialog(self, character):
+        if not self.dialog_tree:
+            self.dialog_tree = DialogTree(character, self.player, self.all_sprites, self.fonts['dialog'], self.end_dialog)
+    
+    def end_dialog(self, character):
+        self.dialog_tree = None 
+        self.player.unblock()
 
     def run(self):
         # main game loop to keep the game running
@@ -119,10 +161,16 @@ class Game:
                     exit()
             
             # looks at all sprites and update
+            self.input()
             self.all_sprites.update(dt)
             self.display_surface.fill('black')
+
             # draw
-            self.all_sprites.draw(self.player.rect.center)
+            self.all_sprites.draw(self.player)
+
+            # overlays 
+            if self.dialog_tree: self.dialog_tree.update()
+
             # update the display with any changes
             pygame.display.update()
 
