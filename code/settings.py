@@ -27,7 +27,8 @@ COLORS = {
 	'plant': '#64a990', 
 	'black': '#000000', 
 	'red': '#f03131',
-	'blue': '#66d7ee'
+	'blue': '#66d7ee',
+    'normal': '#ffffff'
 }
 
 # render order for layers in the world (lower = drawn first)

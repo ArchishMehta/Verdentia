@@ -97,11 +97,13 @@ class Game:
         # monster asset paths
         monsters_path = (4, 2, base_path, '..', 'graphics', 'monsters')
         icons_path = (base_path, '..', 'graphics', 'icons')
+        ui_path = (base_path, '..', 'graphics', 'ui')
 
         # load monsters
         self.monster_frames = {
             'icons': import_folder_dict(*icons_path),
-            'monsters': monster_importer(*monsters_path)
+            'monsters': monster_importer(*monsters_path),
+            'ui':import_folder_dict(*ui_path)
         }
     
     def setup(self, tmx_map, player_start_pos):
