@@ -12,6 +12,13 @@ class Sprite(pygame.sprite.Sprite):
         self.y_sort = self.rect.centery
         self.hitbox = self.rect.copy()
 
+class TransitionSprite(Sprite):
+    def __init__(self, pos, size, target, groups):
+        surf = pygame.Surface(size)
+        super().__init__(pos, surf, groups)
+        self.target = target
+
+
 class BorderSprite(Sprite):
     def __init__(self, pos, surf, groups):
         super().__init__(pos, surf, groups)

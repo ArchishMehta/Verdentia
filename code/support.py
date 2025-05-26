@@ -106,6 +106,13 @@ def all_character_import(*path):
 			new_dict[image_name] = character_importer(4,4,*path, image_name)
 	return new_dict
 
+def tmx_importer(*path): 
+	tmx_dict = {}
+	for folder_path, sub_folders, file_names in walk(join(*path)):
+		for file in file_names:
+			tmx_dict[file.split('.')[0]] = load_pygame(join(folder_path, file))
+	return tmx_dict
+
 # game functions 
 def check_connections(radius, entity, target, tolerance = 30):
 	relation = vector(target.rect.center) - vector(entity.rect.center)
