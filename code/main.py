@@ -9,7 +9,8 @@ from entities import Player, Character
 from groups import AllSprites
 from support import * 
 from dialog import DialogTree
-
+from monster import Monster
+from monster_index import MonsterIndex
 
 # game class
 class Game:
@@ -23,6 +24,17 @@ class Game:
         # set title of the window
         pygame.display.set_caption('Verdentia')
         self.clock = pygame.time.Clock()
+
+        # player monsters 
+        self.player_monsters = {
+            0: Monster('Charmadillo', 30),
+            1: Monster('Friolera', 29),
+            2: Monster('Larvea', 3),
+            4: Monster('Atrox', 24),
+            5: Monster('Gulfin', 17),
+            6: Monster('Jacana', 3),
+            7: Monster('Pouch', 3)
+        }
 
         # groups
         self.all_sprites = AllSprites()
@@ -42,7 +54,10 @@ class Game:
         self.import_assets()
         self.setup(self.tmx_maps['world'], 'house')
 
-        self.dialog_tree = None 
+        # overlays 
+        self.dialog_tree = None
+        self.monster_index = MonsterIndex(self.player_monsters, self.fonts, self.monster_frames)
+        self.index_open = False
 
     def import_assets(self):
         # get path to current file
@@ -69,10 +84,24 @@ class Game:
 
         # create path for fonts
         font_path = os.path.join(base_path, '..', 'graphics', 'fonts', 'PixeloidSans.ttf')
+        font_path2 = os.path.join(base_path, '..', 'graphics', 'fonts', 'dogicapixelbold.otf')
 
         # load fonts
         self.fonts = {
-            'dialog': pygame.font.Font(font_path, 30)
+            'dialog': pygame.font.Font(font_path, 30),
+            'regular': pygame.font.Font(font_path, 18),
+            'small': pygame.font.Font(font_path, 14),
+            'bold': pygame.font.Font(font_path2, 20)
+        }
+
+        # monster asset paths
+        monsters_path = (4, 2, base_path, '..', 'graphics', 'monsters')
+        icons_path = (base_path, '..', 'graphics', 'icons')
+
+        # load monsters
+        self.monster_frames = {
+            'icons': import_folder_dict(*icons_path),
+            'monsters': monster_importer(*monsters_path)
         }
     
     def setup(self, tmx_map, player_start_pos):
@@ -151,6 +180,9 @@ class Game:
                         # dialog
                         self.create_dialog(character)
                         character.can_rotate = False
+            if keys[pygame.K_RETURN]:
+                self.index_open = not self.index_open
+                self.player.blocked = not self.player.blocked
     
     def create_dialog(self, character):
         if not self.dialog_tree:
@@ -213,6 +245,8 @@ class Game:
             # overlays 
             if self.dialog_tree:
                 self.dialog_tree.update()
+            if self.index_open:
+                self.monster_index.update(dt)
 
             # screen tint (fade to black for transition)
             self.tint_screen(dt)
@@ -224,4 +258,3 @@ class Game:
 if __name__ == '__main__':
     game = Game()
     game.run()
-
