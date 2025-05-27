@@ -124,6 +124,9 @@ def monster_importer(cols, rows, *path):
 				monster_dict[image_name][key] = [frame_dict[(col, row)] for col in range(cols)]
 	return monster_dict
 
+def outline_creator(frame_dict, width):
+    return frame_dict
+
 # game functions 
 def check_connections(radius, entity, target, tolerance = 30):
 	relation = vector(target.rect.center) - vector(entity.rect.center)

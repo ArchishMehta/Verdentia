@@ -38,9 +38,9 @@ class Game:
         }
 
         self.dummy_monsters = {
-            0: Monster('Charmadillo', 35),
-            1: Monster('Friolera', 15),
-            2: Monster('Larvea', 8),
+            0: Monster('Charmadillo', 5),
+            1: Monster('Friolera', 2),
+            2: Monster('Larvea', 1),
         }
 
         # groups
@@ -111,8 +111,10 @@ class Game:
         self.monster_frames = {
             'icons': import_folder_dict(*icons_path),
             'monsters': monster_importer(*monsters_path),
-            'ui':import_folder_dict(*ui_path)
+            'ui':import_folder_dict(*ui_path),
+            'outlines': outline_creator(monster_importer(*monsters_path), 4)
         }
+        
 
         # battle fields
         battle_path = (base_path, '..', 'graphics', 'backgrounds')
