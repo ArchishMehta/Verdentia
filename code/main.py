@@ -11,6 +11,7 @@ from support import *
 from dialog import DialogTree
 from monster import Monster
 from monster_index import MonsterIndex
+from battle import Battle
 
 # game class
 class Game:
@@ -36,6 +37,12 @@ class Game:
             7: Monster('Pouch', 3)
         }
 
+        self.dummy_monsters = {
+            0: Monster('Charmadillo', 35),
+            1: Monster('Friolera', 15),
+            2: Monster('Larvea', 8),
+        }
+
         # groups
         self.all_sprites = AllSprites()
         self.collision_sprites = pygame.sprite.Group()
@@ -58,6 +65,7 @@ class Game:
         self.dialog_tree = None
         self.monster_index = MonsterIndex(self.player_monsters, self.fonts, self.monster_frames)
         self.index_open = False
+        self.battle = Battle(self.player_monsters, self.dummy_monsters, self.monster_frames, self.bg_frames['forest'], self.fonts)
 
     def import_assets(self):
         # get path to current file
@@ -105,6 +113,10 @@ class Game:
             'monsters': monster_importer(*monsters_path),
             'ui':import_folder_dict(*ui_path)
         }
+
+        # battle fields
+        battle_path = (base_path, '..', 'graphics', 'backgrounds')
+        self.bg_frames = import_folder_dict(*battle_path)
     
     def setup(self, tmx_map, player_start_pos):
         # clear map 
@@ -170,7 +182,7 @@ class Game:
                     radius = obj.properties['radius'])
 
     def input(self):
-        if not self.dialog_tree:
+        if not self.dialog_tree and not self.battle:
             keys = pygame.key.get_just_pressed()
             if keys[pygame.K_SPACE]:
                 for character in self.character_sprites:
@@ -249,6 +261,8 @@ class Game:
                 self.dialog_tree.update()
             if self.index_open:
                 self.monster_index.update(dt)
+            if self.battle:
+                self.battle.update(dt)
 
             # screen tint (fade to black for transition)
             self.tint_screen(dt)
