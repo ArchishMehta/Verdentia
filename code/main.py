@@ -112,7 +112,8 @@ class Game:
             'icons': import_folder_dict(*icons_path),
             'monsters': monster_importer(*monsters_path),
             'ui':import_folder_dict(*ui_path),
-            'outlines': outline_creator(monster_importer(*monsters_path), 4)
+            'outlines': outline_creator(monster_importer(*monsters_path), 4),
+            'attacks': attack_importer('..', 'graphics', 'attacks')
         }
         
 

@@ -1,9 +1,10 @@
 from settings import *
-from sprites import MonsterSprite, MonsterNameSprite, MonsterLevelSprite, MonsterStatsSprite, MonsterOutlineSprite
+from sprites import MonsterSprite, MonsterNameSprite, MonsterLevelSprite, MonsterStatsSprite, MonsterOutlineSprite, AttackSprite, TimedSprite
 from groups import BattleSprites
 from game_data import ATTACK_DATA
 from support import draw_bar
-
+from timer import Timer # type: ignore
+from random import choice
 
 class Battle():
     # main
@@ -15,6 +16,10 @@ class Battle():
         self.fonts = fonts 
         self.monster_data = {'player': player_monsters, 
                              'opponent': opponent_monsters}
+        self.battle_over = False
+        self.timers = {
+            'opponent delay': Timer(600, func = self.opponent_attack)
+        }
         
 
         # groups
@@ -26,6 +31,7 @@ class Battle():
         self.current_monster = None 
         self.selection_mode = None 
         self.selection_side = 'player'
+        self.selected_attack = None
         self.indexes = {
             'general': 0,
             'monster': 0,
@@ -40,6 +46,9 @@ class Battle():
         for entity, monster in self.monster_data.items():
             for index, monster in {k:v for k, v in monster.items() if k <= 2}.items(): 
                 self.create_monster(monster, index, index, entity)
+            
+            for i in range(len(self.opponent_sprites)):
+                del self.monster_data['opponent'][i]
     
     def create_monster(self, monster, index, pos_index, entity):
         monster.paused = False
@@ -70,7 +79,7 @@ class Battle():
             groups = (self.battle_sprites, self.player_sprites)
 
         # Create the monster sprite and its outline
-        monster_sprite = MonsterSprite(pos, frames, groups, monster, index, pos_index, entity)
+        monster_sprite = MonsterSprite(pos, frames, groups, monster, index, pos_index, entity, self.apply_attack, self.create_monster)
         MonsterOutlineSprite(monster_sprite, self.battle_sprites, outline_frames)
 
         # UI elements
@@ -90,6 +99,7 @@ class Battle():
                 case 'general': limiter = len(BATTLE_CHOICES['full'])
                 case 'attacks': limiter = len(self.current_monster.monster.get_abilities(all = False))
                 case 'switch': limiter = len(self.available_monsters)
+                case 'target': limiter = len(self.opponent_sprites) if self.selection_side == 'opponent' else len(self.player_sprites)
 
             if keys[pygame.K_DOWN]:
                 self.indexes[self.selection_mode] = (self.indexes[self.selection_mode] + 1) % limiter
@@ -98,11 +108,40 @@ class Battle():
                 self.indexes[self.selection_mode] = (self.indexes[self.selection_mode] - 1) % limiter
 
             if keys[pygame.K_SPACE]:
+                if self.selection_mode == 'switch':
+                    index, new_monster = list(self.available_monsters.items())[self.indexes['switch']]
+                    self.current_monster.kill()
+                    self.create_monster(new_monster, index, self.current_monster.pos_index, 'player')
+                    self.selection_mode = None 
+                    self.update_all_monsters('resume')
+
+                if self.selection_mode == 'target':
+                    sprite_group = self.opponent_sprites if self.selection_side == 'opponent' else self.player_sprites
+                    sprites = {sprite.pos_index: sprite for sprite in sprite_group}
+                    monster_sprite = sprites[list(sprites.keys())[self.indexes['target']]]
+
+                    if self.selected_attack:
+                        self.current_monster.activate_attack(monster_sprite, self.selected_attack)
+                        self.selected_attack, self.current_monster, self.selection_mode = None, None, None 
+                    else:
+                        if monster_sprite.monster.health < monster_sprite.monster.get_stat('max_health') * 0.1:
+                            self.monster_data['player'][len(self.monster_data['player'])] = monster_sprite.monster
+                            monster_sprite.delayed_kill(None)
+                            self.update_all_monsters('resume')
+                        else:
+                            TimedSprite(monster_sprite.rect.center, self.monster_frames['ui']['cross'], self.battle_sprites, 1000)
+
+                if self.selection_mode == "attacks":
+                    self.selection_mode = 'target'
+                    self.selected_attack = self.current_monster.monster.get_abilities(all = False)[self.indexes['attacks']]
+                    self.selection_side = ATTACK_DATA[self.selected_attack]['target']
+
                 if self.selection_mode == 'general':
                     if self.indexes['general'] == 0:
                         self.selection_mode = 'attacks'
 
                     if self.indexes['general'] == 1:
+                        self.current_monster.monster.defending = True 
                         self.update_all_monsters('resume')
                         self.current_monster, self.selection_mode = None, None
                         self.indexes['general'] = 0
@@ -113,27 +152,93 @@ class Battle():
                     if self.indexes['general'] == 3:
                         self.selection_mode = 'target'
                         self.selection_side = 'opponent'
-                    
+            
+                self.indexes = {k: 0 for k in self.indexes}
+
             if keys[pygame.K_ESCAPE]:
                 if self.selection_mode in ('attacks', 'switch', 'target'):
                     self.selection_mode = 'general'
 
+    def update_timers(self):
+        for timer in self.timers.values():
+            timer.update()
             
     # battle system 
     def check_active(self):
         for monster_sprite in self.player_sprites.sprites() + self.opponent_sprites.sprites():
             if monster_sprite.monster.initative >= 100:
+                monster_sprite.monster.defending = False
                 self.update_all_monsters('pause')
                 monster_sprite.monster.initative = 0 
                 monster_sprite.set_highlight(True)
                 self.current_monster = monster_sprite
                 if self.player_sprites in monster_sprite.groups():
                     self.selection_mode = 'general'
+                else:
+                    self.timers['opponent delay'].activate()
                     
     def update_all_monsters(self, option):
          for monster_sprite in self.player_sprites.sprites() + self.opponent_sprites.sprites():
              monster_sprite.monster.paused = True if option == 'pause' else False
 
+    def apple_attack(self, target_sprite, attack, amount):
+        AttackSprite(target_sprite.rect.center, self.monster_frames['attacks'][ATTACK_DATA[attack]['animation']], self.battle_sprites)
+        attack_element = ATTACK_DATA[attack]['element']
+        target_element = target_sprite.monster.element
+
+        if attack_element == 'fire' and target_element == 'planet' or \
+        attack_element == 'water' and target_element == 'fire' or\
+        attack_element == 'plant' and target_element == 'water':
+            amount *= 2
+        
+        if attack_element == 'fire' and target_element == 'watet' or \
+        attack_element == 'water' and target_element == 'plant' or\
+        attack_element == 'plant' and target_element == 'fire':
+            amount *= 0.5
+        
+        target_defense = 1 - target_sprite.get_stat('defense') / 2000
+        if target_sprite.monster.defending:
+            target_defense -= 0.2
+        target_defense = max(0, min(1, target_defense))
+        target_sprite.monster.health -= amount * target_defense
+        self.check_death()
+        self.update_all_monsters('resume')
+
+    def check_death(self):
+        for monster_sprite in self.opponent_sprites.sprites() + self.player_sprites.sprites():
+            if monster_sprite.monster.health <= 0:
+                if self.player_sprites in monster_sprite.groups():
+                    active_monster = [(monster_sprite.index, monster_sprite.monster) for monster_sprite in self.player_sprites.sprites()] 
+                    available_monster = [(index, monster) for index, monster in self.monster_data['player'].items() if monster.health > 0 and (index, monster) not in active_monster]
+                    if available_monster:
+                        new_monster_data = [(monster, index, monster_sprite.pos_index, 'player') for index, monster in available_monster]
+                    else:
+                        new_monster_data = None
+                else:
+                    new_monster_data = (list(self.monster_data['opponent'].values())[0], monster_sprite.index, monster_sprite.pos_index, 'opponent') if self.monster_data['opponent'] else None
+                    if self.monster_data['opponent']:
+                        del self.monster_data['opponent'][min(self.monster_data['opponent'])]
+                    monster_sprite.kill()
+                    xp_amount = monster_sprite.monster.levek * 100 / len(self.player_sprites)
+                    for player_sprite in self.player_sprites:
+                        player_sprite.monster.update_xp(xp_amount)
+                monster_sprite.delayed_kill(new_monster_data)
+
+    def opponent_attack(self):
+        ability = (self.current_monster.monster.get_abilities())
+        random_target = choice(self.opponent_sprites.sprites()) if ATTACK_DATA[ability]['target'] == 'player' else choice(self.player_sprites.sprites())
+        self.current_monster.activate_attack(random_target)
+
+    def check_end_battle(self):
+        if len(self.opponent_sprites) == 0 and not self.battle_over:
+            self.battle_over = True
+            print('battle won')
+            for monster in self.monster_data['player'].values():
+                monster.initiative = 0
+
+        if len(self.player_sprites) == 0:
+            pygame.quit()
+            exit()
     # ui
     def draw_ui(self):
         if self.current_monster:
@@ -231,11 +336,13 @@ class Battle():
 
 
     def update(self, dt):
+        self.check_end_battle()
         # updates
         self.input()
+        self.update_timers()
         self.battle_sprites.update(dt)
         self.check_active()
         # draws
         self.display_surface.blit(self.bg_surf, (0, 0))
-        self.battle_sprites.draw(self.current_monster)
+        self.battle_sprites.draw(self.current_monster, self.selection_side, self.selection_mode, self.indexes['target'], self.player_sprites, self.opponent_sprites)
         self.draw_ui()
