@@ -42,8 +42,8 @@ TRAINER_DATA = {
 	'o5': {
 		'monsters': {0: ('Plumette', 20), 1: ('Ivieron', 22), 2: ('Atrox',24), 3: ('Pouch', 19)},
 		'dialog': {
-			'default': ['I love skating!', 'FIGHT!'], 
-			'defeated': ['Good luck with the boss', 'It\'s so cold in here']},
+			'default': ['So you want to challenge the big ones', 'This will be fun!'], 
+			'defeated': ['I hope the lawyers will never spot you', '<3']},
 		'directions': ['up', 'right'],
 		'look_around': True,
 		'defeated': False,
@@ -144,7 +144,7 @@ TRAINER_DATA = {
 		'dialog': {
 			'default': ['It\'s so cold in here', 'maybe a fight will warm me up'], 
 			'defeated': ['Good luck with the boss!']},
-		'directions': ['left'],
+		'directions': ['right'],
 		'look_around': True,
 		'defeated': False,
 		'biome': 'ice'
@@ -154,7 +154,7 @@ TRAINER_DATA = {
 		'dialog': {
 			'default': ['It\'s so cold in here', 'maybe a fight will warm me up'], 
 			'defeated': ['Good luck with the boss!']},
-		'directions': ['right'],
+		'directions': ['left'],
 		'look_around': True,
 		'defeated': False,
 		'biome': 'ice'
@@ -164,7 +164,7 @@ TRAINER_DATA = {
 		'dialog': {
 			'default': ['It\'s so cold in here', 'maybe a fight will warm me up'], 
 			'defeated': ['Good luck with the boss!']},
-		'directions': ['left'],
+		'directions': ['right'],
 		'look_around': True,
 		'defeated': False,
 		'biome': 'ice'
@@ -172,10 +172,10 @@ TRAINER_DATA = {
 	'wx': {
 		'monsters': {0: ('Friolera', 25), 1: ('Gulfin', 20), 2: ('Draem',24), 3: ('Finiette', 30)},
 		'dialog': {
-			'default': ['This place feels kinda warm...', 'fight!'], 
+			'default': ['I hope you brought rations', 'This will be a long journey'], 
 			'defeated': ['Congratultion!']},
 		'directions': ['down'],
-		'look_around': True,
+		'look_around': False,
 		'defeated': False,
 		'biome': 'ice'
 		},
@@ -264,80 +264,80 @@ TRAINER_DATA = {
 
 MONSTER_DATA = {
 	'Plumette': {
-		'stats': {'element': 'plant', 'max_health': 15, 'max_energy': 17, 'attack': 4, 'defense': 8, 'recovery': 5, 'speed': 1},
+		'stats': {'element': 'plant', 'max_health': 15, 'max_energy': 17, 'attack': 4, 'defense': 8, 'recovery': 1, 'speed': 1},
 		'abilities': {0: 'scratch', 5: 'spark'},
 		'evolve': ('Ivieron', 15)},
 	'Ivieron': {
-		'stats': {'element': 'plant', 'max_health': 18, 'max_energy': 20, 'attack': 5, 'defense': 10, 'recovery': 6, 'speed': 1.2},
+		'stats': {'element': 'plant', 'max_health': 18, 'max_energy': 20, 'attack': 5, 'defense': 10, 'recovery': 1.2, 'speed': 1.2},
 		'abilities': {0: 'scratch', 5: 'spark'},
 		'evolve': ('Pluma', 32)},
 	'Pluma': {
-		'stats': {'element': 'plant', 'max_health': 23, 'max_energy': 25, 'attack': 6, 'defense': 12, 'recovery': 7, 'speed': 1.8},
+		'stats': {'element': 'plant', 'max_health': 23, 'max_energy': 26, 'attack': 6, 'defense': 12, 'recovery': 1.8, 'speed': 1.8},
 		'abilities': {0: 'scratch', 5: 'spark'},
 		'evolve': None},
 	'Sparchu': {
-		'stats': {'element': 'fire', 'max_health': 15, 'max_energy': 17, 'attack': 3, 'defense': 8, 'recovery': 5, 'speed': 1},
-		'abilities': {0: 'scratch', 5: 'spark'},
+		'stats': {'element': 'fire', 'max_health': 15, 'max_energy': 7, 'attack': 3, 'defense': 8, 'recovery': 1.1, 'speed': 1},
+		'abilities': {0: 'scratch', 5: 'fire', 15: 'battlecry', 26:'explosion'},
 		'evolve': ('Cindrill', 15)},
 	'Cindrill': {
-		'stats': {'element': 'fire', 'max_health': 18, 'max_energy': 20, 'attack': 4, 'defense': 10, 'recovery': 6, 'speed': 1.2},
-		'abilities': {0: 'scratch', 5: 'spark'},
+		'stats': {'element': 'fire', 'max_health': 18, 'max_energy': 10, 'attack': 3.5, 'defense': 10, 'recovery': 1.2, 'speed': 1.1},
+		'abilities': {0: 'scratch', 5: 'fire', 15: 'battlecry', 26:'explosion'},
 		'evolve': ('Charmadillo', 33)},
 	'Charmadillo': {
-		'stats': {'element': 'fire', 'max_health': 27, 'max_energy': 23, 'attack': 6, 'defense': 17, 'recovery': 7, 'speed': 1.5},
-		'abilities': {0: 'scratch', 5: 'fire', 10:'explosion', 12: 'battlecry', 20:'annihilate'},
+		'stats': {'element': 'fire', 'max_health': 29, 'max_energy': 12, 'attack': 4, 'defense': 17, 'recovery': 1.35, 'speed': 1.1},
+		'abilities': {0: 'scratch', 5: 'fire', 15: 'battlecry', 26:'explosion', 45: 'annihilate'},
 		'evolve': None},
 	'Finsta': {
-		'stats': {'element': 'water', 'max_health': 13, 'max_energy': 17, 'attack': 2, 'defense': 8, 'recovery': 5, 'speed': 1.8},
-		'abilities': {0: 'scratch', 5: 'spark'},
+		'stats': {'element': 'water', 'max_health': 13, 'max_energy': 17, 'attack': 2, 'defense': 8, 'recovery': 1.5, 'speed': 1.8},
+		'abilities': {0: 'scratch', 5: 'spark', 15: 'splash', 20: 'ice', 25: 'heal'},
 		'evolve': ('Gulfin', 34)},
 	'Gulfin': {
-		'stats': {'element': 'water', 'max_health': 18, 'max_energy': 20, 'attack': 3, 'defense': 10, 'recovery': 6, 'speed': 2},
-		'abilities': {0: 'scratch', 5: 'spark'},
-		'evolve': ('Finiette', 32)},
+		'stats': {'element': 'water', 'max_health': 18, 'max_energy': 20, 'attack': 3, 'defense': 10, 'recovery': 1.8, 'speed': 2},
+		'abilities': {0: 'scratch', 5: 'spark', 15: 'splash', 20: 'ice', 25: 'heal'},
+		'evolve': ('Finiette', 45)},
 	'Finiette': {
-		'stats': {'element': 'water', 'max_health': 27, 'max_energy': 23, 'attack': 4, 'defense': 17, 'recovery': 7, 'speed': 2.5},
-		'abilities': {0: 'scratch', 5: 'spark'},
+		'stats': {'element': 'water', 'max_health': 27, 'max_energy': 23, 'attack': 4, 'defense': 17, 'recovery': 2, 'speed': 2.5},
+		'abilities': {0: 'scratch', 5: 'spark', 15: 'splash', 20: 'ice', 25: 'heal'},
 		'evolve': None},
 	'Atrox': {
-		'stats': {'element': 'fire', 'max_health': 18, 'max_energy': 20, 'attack': 3, 'defense': 10, 'recovery': 6, 'speed': 1.9},
-		'abilities': {0: 'scratch', 5: 'spark'},
+		'stats': {'element': 'fire', 'max_health': 18, 'max_energy': 20, 'attack': 3, 'defense': 10, 'recovery': 1.3, 'speed': 1.9},
+		'abilities': {0: 'scratch', 5: 'spark', 30: 'fire'},
 		'evolve': None},
 	'Pouch': {
-		'stats': {'element': 'plant', 'max_health': 23, 'max_energy': 25, 'attack': 4, 'defense': 12, 'recovery': 7, 'speed': 1.5},
-		'abilities': {0: 'scratch', 5: 'spark'},
+		'stats': {'element': 'plant', 'max_health': 23, 'max_energy': 25, 'attack': 4, 'defense': 12, 'recovery': 1, 'speed': 1.5},
+		'abilities': {0: 'scratch', 5: 'spark', 25: 'heal'},
 		'evolve': None},
 	'Draem': {
-		'stats': {'element': 'plant', 'max_health': 23, 'max_energy': 25, 'attack': 4, 'defense': 12, 'recovery': 7, 'speed': 1.4},
-		'abilities': {0: 'scratch', 5: 'spark'},
+		'stats': {'element': 'plant', 'max_health': 23, 'max_energy': 25, 'attack': 4, 'defense': 12, 'recovery': 1.2, 'speed': 1.4},
+		'abilities': {0: 'scratch', 5: 'heal', 20: 'explosion', 25: 'splash'},
 		'evolve': None},
 	'Larvea': {
-		'stats': {'element': 'plant', 'max_health': 15, 'max_energy': 17, 'attack': 1, 'defense': 8, 'recovery': 5, 'speed': 1},
+		'stats': {'element': 'plant', 'max_health': 15, 'max_energy': 17, 'attack': 1, 'defense': 8, 'recovery': 1, 'speed': 1},
 		'abilities': {0: 'scratch', 5: 'spark'},
 		'evolve': ('Cleaf', 4)},
 	'Cleaf': {
-		'stats': {'element': 'plant', 'max_health': 18, 'max_energy': 20, 'attack': 3, 'defense': 10, 'recovery': 6, 'speed': 1.6},
-		'abilities': {0: 'scratch', 5: 'spark'},
+		'stats': {'element': 'plant', 'max_health': 18, 'max_energy': 20, 'attack': 3, 'defense': 10, 'recovery': 1.7, 'speed': 1.6},
+		'abilities': {0: 'scratch', 5: 'heal'},
 		'evolve': None},
 	'Jacana': {
-		'stats': {'element': 'fire', 'max_health': 12, 'max_energy': 19, 'attack': 3, 'defense': 10, 'recovery': 6, 'speed': 2.6},
-		'abilities': {0: 'scratch', 5: 'spark'},
+		'stats': {'element': 'fire', 'max_health': 12, 'max_energy': 19, 'attack': 3, 'defense': 10, 'recovery': 2.1, 'speed': 2.6},
+		'abilities': {0: 'scratch', 5: 'spark', 15: 'burn', 20: 'explosion', 25: 'heal'},
 		'evolve': None},
 	'Friolera': {
-		'stats': {'element': 'water', 'max_health': 27, 'max_energy': 23, 'attack': 4, 'defense': 17, 'recovery': 7, 'speed': 2},
+		'stats': {'element': 'water', 'max_health': 13, 'max_energy': 20, 'attack': 4, 'defense': 6, 'recovery': 1.3, 'speed': 2},
 		'abilities': {0: 'scratch', 5: 'spark', 15: 'splash', 20: 'ice', 25: 'heal'},
 		'evolve': None},
 }
 
 ATTACK_DATA = {
 	'burn':       {'target': 'opponent', 'amount': 2,    'cost': 15, 'element': 'fire',   'animation': 'fire'},
-	'heal':       {'target': 'player',   'amount': -1.2, 'cost': 15, 'element': 'plant',  'animation': 'green'},
-	'battlecry':  {'target': 'player',   'amount': 1.4,  'cost': 20, 'element': 'normal', 'animation': 'green'},
+	'heal':       {'target': 'player',   'amount': -1.2, 'cost': 600, 'element': 'plant',  'animation': 'green'},
+	'battlecry':  {'target': 'player',   'amount': -1.4, 'cost': 20, 'element': 'normal', 'animation': 'green'},
 	'spark':      {'target': 'opponent', 'amount': 1.1,  'cost': 20, 'element': 'fire',   'animation': 'fire'},
 	'scratch':    {'target': 'opponent', 'amount': 1.2,  'cost': 20, 'element': 'normal', 'animation': 'scratch'},
 	'splash':     {'target': 'opponent', 'amount': 2,    'cost': 15, 'element': 'water',  'animation': 'splash'},
 	'fire':       {'target': 'opponent', 'amount': 2,    'cost': 15, 'element': 'fire',   'animation': 'fire'},
 	'explosion':  {'target': 'opponent', 'amount': 2,    'cost': 90, 'element': 'fire',   'animation': 'explosion'},
-	'annihilate': {'target': 'opponent', 'amount': 2,    'cost': 15, 'element': 'fire',   'animation': 'explosion'},
+	'annihilate': {'target': 'opponent', 'amount': 3,    'cost': 30, 'element': 'fire',   'animation': 'explosion'},
 	'ice':        {'target': 'opponent', 'amount': 2,    'cost': 15, 'element': 'water',  'animation': 'ice'},
 }
