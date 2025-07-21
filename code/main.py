@@ -1,47 +1,46 @@
-# imports
-import pygame
-import os
-from game_data import *
 from settings import *
+from game_data import *
 from pytmx.util_pygame import load_pygame
+from os.path import join, dirname, abspath
+from random import randint
+
 from sprites import Sprite, AnimatedSprite, MonsterPatchSprite, BorderSprite, CollidableSprite, TransitionSprite
 from entities import Player, Character
 from groups import AllSprites
-from support import * 
 from dialog import DialogTree
-from monster import Monster
 from monster_index import MonsterIndex
 from battle import Battle
-from timer import Timer  # type: ignore
-from random import randint
+from timer import Timer # type: ignore
 from evolution import Evolution
 
-# game class
+from support import *
+from monster import Monster
+
 class Game:
-    # main
     def __init__(self):
-        # initialize all pygame modules
         pygame.init()
-
-        # create main game window
         self.display_surface = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
-
-        # set title of the window
-        pygame.display.set_caption('Verdentia')
+        pygame.display.set_caption('Monster Hunter')
         self.clock = pygame.time.Clock()
+        self.encounter_timer = Timer(2000, func=self.monster_encounter)
 
-        # timer 
-        self.encounter_timer = Timer(2000, func = self.monster_encounter)
-
-        # player monsters 
+        # player monsters
         self.player_monsters = {
-            0: Monster('Charmadillo', 30),
-            1: Monster('Friolera', 29),
-            2: Monster('Larvea', 3),
-            4: Monster('Atrox', 24),
-            5: Monster('Gulfin', 17),
-            6: Monster('Jacana', 3),
-            7: Monster('Pouch', 3)
+            0: Monster('Ivieron', 32),
+            1: Monster('Atrox', 15),
+            2: Monster('Cindrill', 16),
+            3: Monster('Atrox', 10),
+            4: Monster('Sparchu', 11),
+            5: Monster('Gulfin', 9),
+            6: Monster('Jacana', 10),
+        }
+        for monster in self.player_monsters.values():
+            monster.xp += randint(0, monster.level * 100)
+
+        self.test_monsters = {
+            0: Monster('Finsta', 15),
+            1: Monster('Pouch', 13),
+            2: Monster('Larvea', 12),
         }
 
         # groups
@@ -51,84 +50,65 @@ class Game:
         self.transition_sprites = pygame.sprite.Group()
         self.monster_sprites = pygame.sprite.Group()
 
-        # transition
+        # transition/tint
         self.transition_target = None
         self.tint_surf = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
         self.tint_mode = 'untint'
-        self.tint_progress = 0 
-        self.tint_direction = -1 
+        self.tint_progress = 0
+        self.tint_direction = -1
         self.tint_speed = 600
 
-        # load game assets
-        self.import_assets()
-        self.setup(self.tmx_maps['world'], 'house')
-        self.audio['overworld'].play(-1)
-
-        # overlays 
+        # overlays
         self.dialog_tree = None
-        self.monster_index = MonsterIndex(self.player_monsters, self.fonts, self.monster_frames)
         self.index_open = False
         self.battle = None
         self.evolution = None
 
+        # assets
+        self.import_assets()
+        self.setup(self.tmx_maps['world'], 'house')
+        self.audio['overworld'].play(-1)
+
+        self.monster_index = MonsterIndex(self.player_monsters, self.fonts, self.monster_frames)
+
     def import_assets(self):
-        # get path to current file
-        base_path = os.path.dirname(os.path.abspath(__file__))
+        base_path = dirname(abspath(__file__))
 
-        # create paths to TMX map files
-        world_map_path = os.path.join(base_path, '..', 'data', 'maps', 'world.tmx')
-        hospital_map_path = os.path.join(base_path, '..', 'data', 'maps', 'hospital.tmx')
-
-        # load maps
+        # maps
         self.tmx_maps = tmx_importer(base_path, '..', 'data', 'maps')
 
-        # create path for water animation and coast tileset
-        water_path = os.path.join(base_path, '..', 'graphics', 'tilesets', 'water')
-        coast_path = (24, 12, base_path, '..', 'graphics', 'tilesets', 'coast')
-        characters_path = (base_path, '..', 'graphics', 'characters')
-
-        # load animation and tiles
+        # overworld
         self.overworld_frames = {
-            'water': import_folder(water_path),
-            'coast': coast_importer(*coast_path),
-            'characters': all_character_import(*characters_path)
+            'water': import_folder(base_path, '..', 'graphics', 'tilesets', 'water'),
+            'coast': coast_importer(24, 12, base_path, '..', 'graphics', 'tilesets', 'coast'),
+            'characters': all_character_import(base_path, '..', 'graphics', 'characters')
         }
 
-        # create path for fonts
-        font_path = os.path.join(base_path, '..', 'graphics', 'fonts', 'PixeloidSans.ttf')
-        font_path2 = os.path.join(base_path, '..', 'graphics', 'fonts', 'dogicapixelbold.otf')
-
-        # load fonts
-        self.fonts = {
-            'dialog': pygame.font.Font(font_path, 30),
-            'regular': pygame.font.Font(font_path, 18),
-            'small': pygame.font.Font(font_path, 14),
-            'bold': pygame.font.Font(font_path2, 20)
-        }
-
-        # monster asset paths
+        # monsters
         monsters_path = (4, 2, base_path, '..', 'graphics', 'monsters')
-        icons_path = (base_path, '..', 'graphics', 'icons')
-        ui_path = (base_path, '..', 'graphics', 'ui')
-
-        # load monsters
         self.monster_frames = {
-            'icons': import_folder_dict(*icons_path),
+            'icons': import_folder_dict(base_path, '..', 'graphics', 'icons'),
             'monsters': monster_importer(*monsters_path),
-            'ui':import_folder_dict(*ui_path),
-            'outlines': outline_creator(monster_importer(*monsters_path), 4),
-            'attacks': attack_importer('..', 'graphics', 'attacks')
+            'ui': import_folder_dict(base_path, '..', 'graphics', 'ui'),
+            'attacks': attack_importer(base_path, '..', 'graphics', 'attacks'),
         }
-        
+        self.monster_frames['outlines'] = outline_creator(self.monster_frames['monsters'], 4)
 
-        # battle fields
-        battle_path = (base_path, '..', 'graphics', 'backgrounds')
-        self.bg_frames = import_folder_dict(*battle_path)
-        star_animation_path = os.path.join(base_path, '..', 'graphics', 'other', 'star animation')
-        self.star_animation_frames = import_folder(star_animation_path)
+        # fonts
+        self.fonts = {
+            'dialog': pygame.font.Font(join(base_path, '..', 'graphics', 'fonts', 'PixeloidSans.ttf'), 30),
+            'regular': pygame.font.Font(join(base_path, '..', 'graphics', 'fonts', 'PixeloidSans.ttf'), 18),
+            'small': pygame.font.Font(join(base_path, '..', 'graphics', 'fonts', 'PixeloidSans.ttf'), 14),
+            'bold': pygame.font.Font(join(base_path, '..', 'graphics', 'fonts', 'dogicapixelbold.otf'), 20)
+        }
+
+        # battle
+        self.bg_frames = import_folder_dict(base_path, '..', 'graphics', 'backgrounds')
+        self.start_animation_frames = import_folder(base_path, '..', 'graphics', 'other', 'star animation')
+
         # audio
-        audio_path = (base_path, '..', 'audio')
-        self.audio = audio_importer(*audio_path)
+        self.audio = audio_importer(base_path, '..', 'audio')
+
         
     def setup(self, tmx_map, player_start_pos):
         # clear map 
@@ -280,7 +260,7 @@ class Game:
                 if monster.level == monster.evolution[1]:
                     self.audio['evolution'].play()
                     self.player.block()
-                    self.evolution = Evolution(self.monster_frames['monsters'], monster.name, monster.evolution[0], self.fonts['bold'], self.end_evolution, self.star_animation_frames)
+                    self.evolution = Evolution(self.monster_frames['monsters'], monster.name, monster.evolution[0], self.fonts['bold'], self.end_evolution, self.start_animation_frames)
                     self.player_monsters[index] = Monster(monster.evolution[0], monster.level)
         if not self.evolution:
             self.audio['overworld'].play()
